@@ -1,6 +1,9 @@
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <string.h>  
+#include <Stepper.h>
+// 定義步進馬達轉一圈所需的步數及輸出的腳位
+Stepper stepper(400, A2, A3, A4, A5);
 /******************************************************/
 #define        COV_RATIO                       0.2            //ug/mmm / mv
 #define        NO_DUST_VOLTAGE                 400            //mv
@@ -35,10 +38,12 @@ int fan_high = 255;
 int fan_in = 150;
 int fan_low  = 50;
 int fan_off  =  0;
-int cc = 0;
-int ccc = 0;
+int cc = 0;  //10秒 計數器
+int ccc = 0; //1秒  計數器
 
-#define time_out  1 //每15分鐘
+int cccc = 0; //馬達
+
+#define time_out  15 //每15分鐘
 int Sec =0;
 int Min =0;
 
@@ -48,6 +53,7 @@ float dataC; //溼度
 
 boolean flagA=false;
 boolean flagB=false;
+boolean Motor=false;
 int Bdata[5];
 int Bdatanum= 0;
 void pm(){
@@ -171,6 +177,7 @@ void Fan_off()
 }
 
 
+
 void setup()
 {
   pinMode(iled, OUTPUT);
@@ -181,6 +188,8 @@ void setup()
   
   Serial.begin(9600);
   Serial1.begin(57600);
+
+  stepper.setSpeed(80); 
 
 }
 
@@ -249,9 +258,11 @@ void loop()
         }
     }
 
-   if (ccc == 20){     //每1秒
+   if (ccc == 100){     //每1秒
       pm();
       temp();
+      
+      if (density-20 >= 151 and Motor == false) {Motor = true; cccc = 1;}
       
       dataA =  dataA + density-20;
       dataB =  dataB + ((float)DHT11.temperature)-3;
@@ -301,7 +312,7 @@ void loop()
        
     }
      
-  if (cc == 200){    //每10秒
+  if (cc == 1000){    //每10秒
 //      pm();
 //      temp();
 //      Serial1.print(String(density-20)+","+String(((float)DHT11.temperature)-3, 2)+","+ String((float)DHT11.humidity, 2));
@@ -326,9 +337,22 @@ void loop()
       dataB=0;
       dataC=0;
       cc = 0;
-    }  
+    }
+  if (Motor and cccc <= 50){
+    stepper.step(5); 
+    Serial.print("+++:");
+    Serial.println(cccc);
+      cccc++;
+    }
+  else if (Motor and cccc > 49 and cccc <= 100){
+    stepper.step(-5); 
+    Serial.print("---:");
+    Serial.println(cccc);
+      cccc++;
+      }
 
-  delay(50);
+  delay(10);
   ccc++;    
   cc++;
+  if (cccc==100) {Motor = false;}
 }
