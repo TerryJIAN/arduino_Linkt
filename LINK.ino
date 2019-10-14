@@ -1,9 +1,11 @@
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <string.h>  
-#include <Stepper.h>
+
 // 定義步進馬達轉一圈所需的步數及輸出的腳位
-Stepper stepper(400, A2, A3, A4, A5);
+#define stepPin A3 //CLK+
+#define dirPin A2 //CW+
+#define enPin A4 //EN+
 /******************************************************/
 #define        COV_RATIO                       0.2            //ug/mmm / mv
 #define        NO_DUST_VOLTAGE                 400            //mv
@@ -186,10 +188,16 @@ void setup()
   pinMode(LED, OUTPUT);
   pinMode(Fan9, OUTPUT);
   
+  pinMode(stepPin,OUTPUT); 
+  pinMode(dirPin,OUTPUT);
+
+  pinMode(enPin,OUTPUT);
+  digitalWrite(enPin,LOW);
+  
   Serial.begin(9600);
   Serial1.begin(57600);
 
-  stepper.setSpeed(80); 
+
 
 }
 
@@ -338,21 +346,39 @@ void loop()
       dataC=0;
       cc = 0;
     }
-  if (Motor and cccc <= 50){
-    stepper.step(5); 
-    Serial.print("+++:");
-    Serial.println(cccc);
-      cccc++;
-    }
-  else if (Motor and cccc > 49 and cccc <= 100){
-    stepper.step(-5); 
-    Serial.print("---:");
-    Serial.println(cccc);
-      cccc++;
+  if (Motor and cccc <= 5){
+    digitalWrite(dirPin,HIGH); 
+        Serial.print("+++:");
+        Serial.println(cccc);
+           
+        for(int x = 0; x < 10; x++) {
+        digitalWrite(stepPin,HIGH); 
+        delayMicroseconds(500); 
+        digitalWrite(stepPin,LOW); 
+        delayMicroseconds(500); 
+        } 
+        cccc++;
+      }
+   else if (Motor and cccc > 5 and cccc <= 15){       
+        cccc++;
+      }   
+  else if (Motor and cccc > 15 and cccc <= 20){
+    digitalWrite(dirPin,LOW);
+        Serial.print("---:");
+        Serial.println(cccc);
+        
+        for(int x = 0; x < 10; x++) {
+        digitalWrite(stepPin,HIGH); 
+        delayMicroseconds(500); 
+        digitalWrite(stepPin,LOW); 
+        delayMicroseconds(500); 
+        } 
+        cccc++;
+
       }
 
   delay(10);
   ccc++;    
   cc++;
-  if (cccc==100) {Motor = false;}
+  if (cccc>20) {Motor = false;}
 }
